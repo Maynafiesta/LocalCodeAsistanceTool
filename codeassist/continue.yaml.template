@@ -1,0 +1,46 @@
+name: Embedded C++ Local Assistant
+version: 0.1.0
+schema: v1
+models:
+  - name: Local C++14 Chat
+    provider: ollama
+    model: qwen2.5-coder:7b-instruct-q4_K_M
+    apiBase: SERVER_URL_JSON
+    roles: [chat, edit]
+    capabilities: []
+    requestOptions:
+      headers:
+        Authorization: AUTH_HEADER_JSON
+      timeout: 120000
+    defaultCompletionOptions:
+      contextLength: 4096
+      maxTokens: 1024
+      temperature: 0.2
+  - name: Local FIM Completion
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    apiBase: SERVER_URL_JSON
+    roles: [autocomplete]
+    requestOptions:
+      headers:
+        Authorization: AUTH_HEADER_JSON
+      timeout: 15000
+    defaultCompletionOptions:
+      contextLength: 8192
+      maxTokens: 256
+      temperature: 0.1
+    autocompleteOptions:
+      disable: false
+      debounceDelay: 350
+      modelTimeout: 5000
+      maxPromptTokens: 4096
+      useCache: true
+      onlyMyCode: true
+      useRecentlyEdited: true
+      useRecentlyOpened: true
+      useImports: true
+      template: "<|fim_prefix|>{{{ prefix }}}<|fim_suffix|>{{{ suffix }}}<|fim_middle|>"
+rules:
+  - "Use C++14. Follow project patterns for Qt, GStreamer, Ethernet, serial I/O and ACE."
+  - "Check resource ownership, Qt thread affinity, partial I/O, deadlines and error handling."
+  - "Do not invent APIs or library versions. Ask for missing declarations."

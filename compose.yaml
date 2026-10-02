@@ -1,0 +1,47 @@
+name: codeassist
+services:
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:0.35.0}
+    restart: unless-stopped
+    # Docker >= 28.3 with CDI enabled; toolkit generates /var/run/cdi/nvidia.yaml.
+    devices:
+      - nvidia.com/gpu=all
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NO_CLOUD: "1"
+      OLLAMA_NUM_PARALLEL: "3"
+      OLLAMA_MAX_LOADED_MODELS: "2"
+      OLLAMA_MAX_QUEUE: "15"
+      OLLAMA_CONTEXT_LENGTH: "4096"
+      OLLAMA_FLASH_ATTENTION: "1"
+      OLLAMA_KV_CACHE_TYPE: q8_0
+      OLLAMA_KEEP_ALIVE: 15m
+    volumes:
+      - ./data/ollama:/root/.ollama
+    # Backend has no host port. Only the authenticated gateway is exposed.
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  gateway:
+    image: codeassist-gateway:0.1.0
+    build: .
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      CONTEXT_INDEX_PATH: ${CONTEXT_INDEX_PATH:-/context/context.sqlite}
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:8080:8080"
+    volumes:
+      - ./data/context:/context:ro
+    depends_on:
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/live', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

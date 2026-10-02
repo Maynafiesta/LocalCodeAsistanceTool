@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CodeAssist · Canlı istekler</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#10151f;color:#e3eaf4}*{box-sizing:border-box}body{margin:0}header{padding:22px 28px;border-bottom:1px solid #2b374c;display:flex;justify-content:space-between;gap:20px;align-items:center}h1{font-size:22px;margin:0 0 6px}p{margin:0;color:#a4b5cb;font-size:13px;line-height:1.6}button,input,select{font:inherit;font-size:13px;border:1px solid #3d4d67;border-radius:7px;background:#1c2739;color:#e3eaf4;padding:9px 12px}button{cursor:pointer}button:hover{background:#30425c}button:disabled{opacity:.5;cursor:default}input[type=password]{width:260px}input[type=checkbox]{accent-color:#59d1b4}.auth{display:flex;flex-wrap:wrap;gap:8px;align-items:center}#connection{min-height:24px;padding:10px 28px;color:#74dfc4;font-size:13px}.error{color:#ffa1a1!important}.metrics{display:flex;gap:12px;padding:0 28px 18px;flex-wrap:wrap}.metric{padding:10px 16px;background:#1b2535;border:1px solid #2b374c;border-radius:8px;font-size:13px;color:#a4b5cb}.metric b{color:#e3eaf4;font-size:18px;margin-left:10px}.layout{display:grid;grid-template-columns:320px minmax(0,1fr);border-top:1px solid #2b374c;min-height:70vh}aside{border-right:1px solid #2b374c;padding:16px;background:#131b28}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;font-size:12px;color:#a4b5cb}#requests{display:flex;flex-direction:column;gap:8px}.request{text-align:left;width:100%;background:#1a2435;border:1px solid #2b374c;padding:12px}.request.selected{border-color:#59d1b4;background:#23374a}.request strong{display:block;margin-bottom:6px;font-size:13px}.request span{font-size:12px;color:#a4b5cb;display:block;line-height:1.7}main{padding:20px 24px;min-width:0}#empty{padding:70px 20px;text-align:center;color:#a4b5cb}#details[hidden]{display:none}#meta{line-height:1.8;font-size:13px;color:#a4b5cb;overflow-wrap:anywhere}#meta b{color:#74dfc4}#truncation{color:#ffc880;font-size:13px;margin:10px 0}.panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}section,details{border:1px solid #2b374c;border-radius:8px;background:#151e2d;overflow:hidden}h2,summary{font-size:13px;background:#1b2739;margin:0;padding:12px 15px;color:#b9cce4}summary{cursor:pointer}.wide{grid-column:1/-1}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;margin:0;padding:15px;max-height:440px;overflow:auto}#output{font-size:14px;color:#9fe6cd;min-height:80px}footer{padding:16px 28px;font-size:12px;color:#a4b5cb;border-top:1px solid #2b374c}#timeline{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:#a4b5cb}#timeline span{padding:5px 8px;background:#1b2739;border-radius:5px}@media(max-width:950px){header{align-items:flex-start;flex-direction:column}.layout{grid-template-columns:250px minmax(0,1fr)}.panels{grid-template-columns:1fr}.wide{grid-column:auto}}@media(max-width:650px){.layout{grid-template-columns:1fr}aside{border-right:0;max-height:300px;overflow:auto}header,main{padding:16px}input[type=password]{width:100%}.auth{width:100%}}
+</style>
+<header><div><h1>CodeAssist · Canlı istekler</h1><p>İstemciden sunucuya, modelden istemciye: canlı metin ve JSON akışı.</p></div><form id="auth" class="auth"><input id="token" type="password" aria-label="Sunucu yöneticisi anahtarı" placeholder="developer API anahtarı" autocomplete="off" required><button id="connect" type="submit">Bağlan</button><button id="disconnect" type="button" disabled>Bağlantıyı kapat</button></form></header>
+<div id="connection" role="status">Sunucudaki developer anahtarıyla bağlanın. Anahtar yalnızca bu sekmenin belleğinde tutulur.</div>
+<div class="metrics"><div class="metric">Aktif <b id="active">—</b></div><div class="metric">Kuyruk <b id="queued">—</b></div><div class="metric">Tamamlanan <b id="completed">—</b></div><div class="metric">Reddedilen <b id="rejected">—</b></div><div class="metric">Kayıt belleği <b id="memory">—</b></div></div>
+<div class="layout"><aside><div class="toolbar"><label><input id="follow" type="checkbox" checked> Yeni isteği izle</label><select id="filter" aria-label="İstek filtresi"><option value="all">Tüm istekler</option><option value="chat">Sohbet</option><option value="generate">Tamamlama</option></select><button id="clear" disabled>Bitmiş kayıtları temizle</button></div><div id="requests"><p>Henüz bağlantı yok.</p></div></aside>
+<main><div id="empty">Bağlandıktan sonra Continue üzerinden bir sohbet veya kod tamamlama isteği gönderin.</div><div id="details" hidden><h1 id="title"></h1><div id="meta"></div><div id="timeline"></div><div id="truncation"></div><div class="panels"><section class="wide"><h2>Üretilen yanıt · tokenlar geldikçe güncellenir</h2><pre id="output"></pre></section><section><h2>1 · İstemciden gelen istek gövdesi</h2><pre id="request_body"></pre></section><section><h2>2 · Modele iletilen JSON · sunucu kuralları dahil</h2><pre id="model_request"></pre></section><details class="wide"><summary>3 · Modelden gelen ham yanıt / NDJSON</summary><pre id="model_response"></pre></details><details class="wide"><summary>4 · İstemci bağlantısına yazılan ham yanıt / NDJSON</summary><pre id="client_response"></pre></details><details class="wide"><summary>Başlıklar, model ölçümleri ve durum bilgileri</summary><pre id="extra"></pre></details></div></div></main></div>
+<footer>Son 64 istek · istek başına 4 MiB, toplam 32 MiB metin bütçesi · yalnızca RAM, yeniden başlatınca silinir. API anahtarları ve çerez başlıkları kaydedilmez. “Gönderildi”, sunucunun bağlantıya yazmasıdır; IDE'nin yanıtı kullandığını doğrulamaz.</footer>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const names={receiving:'Alınıyor',queued:'Kuyrukta',model_requested:'Model bekleniyor',model_response:'Model yanıtlıyor',generating:'Üretiliyor',model_done:'Üretim bitti',sending:'Gönderiliyor',completed:'Gönderim tamamlandı',rejected:'Reddedildi',failed:'Hata',disconnected:'İstemci ayrıldı',model_error:'Model hatası',received:'Alındı'};
+let session=null,selected=null,shownVersion=-1,latest=null,busy=false,pending=false;
+const time=value=>value?new Date(value).toLocaleTimeString('tr-TR',{timeZone:'Europe/Istanbul',hour12:false}):'—';
+const pretty=value=>{try{return JSON.stringify(JSON.parse(value),null,2)}catch{return value}};
+function status(message,error=false){$('connection').textContent=message;$('connection').classList.toggle('error',error)}
+async function api(path,options={}){
+ const current=session;if(!current)throw new Error('Bağlantı kapalı');
+ const response=await fetch(path,{...options,headers:{Authorization:'Bearer '+current.key},signal:current.controller.signal,cache:'no-store'});
+ if(!response.ok){if(response.status===401)throw new Error('Anahtar geçersiz (401).');if(response.status===403)throw new Error('İzleme yetkisi yok (403). Laptop anahtarı yerine developer anahtarını kullanın.');throw new Error('HTTP '+response.status)}
+ return response;
+}
+function reset(){selected=null;shownVersion=-1;latest=null;$('details').hidden=true;$('empty').hidden=false;$('requests').replaceChildren();for(const id of ['request_body','model_request','output','model_response','client_response','extra','meta','timeline','title','truncation'])$(id).textContent='';for(const id of ['active','queued','completed','rejected','memory'])$(id).textContent='—'}
+function disconnect(){if(session)session.controller.abort();session=null;$('token').value='';$('connect').disabled=false;$('disconnect').disabled=true;$('clear').disabled=true;reset();status('Bağlantı kapalı. Ekrandaki içerik temizlendi.')}
+function renderList(records){
+ $('requests').replaceChildren();const filter=$('filter').value;
+ const visible=records.filter(r=>filter==='all'||r.path==='/api/'+filter);
+ if(!visible.length){const p=document.createElement('p');p.textContent='Henüz bu filtreye uygun istek yok.';$('requests').append(p)}
+ for(const record of visible){const button=document.createElement('button');button.type='button';button.className='request'+(record.id===selected?' selected':'');const title=document.createElement('strong');title.textContent=record.path+' · '+(names[record.status]||record.status);const sub=document.createElement('span');sub.textContent=time(record.received_at)+' · '+record.user+' · '+record.client;const info=document.createElement('span');info.textContent=(record.model||'Model çağrısı yok')+' · HTTP '+(record.http_status??'—');button.append(title,sub,info);button.onclick=()=>{$('follow').checked=false;selected=record.id;shownVersion=-1;refresh()};$('requests').append(button)}
+}
+function renderDetail(record){
+ $('details').hidden=false;$('empty').hidden=true;$('title').textContent=record.path+' · '+(names[record.status]||record.status);
+ $('meta').textContent=`${record.user} / ${record.client} · ${record.id}\n${time(record.received_at)} → ${time(record.finished_at)} · HTTP ${record.http_status??'—'} · İlk token ${record.ttft_ms??'—'} ms · Süre ${record.duration_ms??'—'} ms · Gönderilen ${record.response_bytes_sent} bayt`;
+ $('timeline').replaceChildren();for(const event of record.events){const span=document.createElement('span');span.textContent=time(event.at)+' '+(names[event.stage]||event.stage);$('timeline').append(span)}
+ $('truncation').textContent=record.truncated_fields.length?'Bellek sınırı nedeniyle kırpılan alanlar: '+record.truncated_fields.join(', '):'';
+ for(const field of ['request_body','model_request','output','model_response','client_response']){const node=$(field);const atBottom=node.scrollTop+node.clientHeight>=node.scrollHeight-25;const input=field==='request_body'||field==='model_request';node.textContent=input?pretty(record[field]):record[field];if(atBottom&&!input)node.scrollTop=node.scrollHeight}
+ $('extra').textContent=JSON.stringify({request_headers:record.request_headers,response_headers:record.response_headers,model_done:record.model_done,model_stats:record.model_stats,upstream_status:record.upstream_status,error:record.error,error_type:record.error_type,query:record.query},null,2);
+}
+async function refresh(){
+ if(!session)return;if(busy){pending=true;return}busy=true;const current=session;
+ try{
+  const data=await (await api('/v1/monitor/requests')).json();if(session!==current)return;latest=data;
+  for(const id of ['active','queued','completed','rejected'])$(id).textContent=data.metrics[id];$('memory').textContent=(data.stored_bytes/1048576).toFixed(2)+' MiB';
+  const filtered=data.requests.filter(r=>$('filter').value==='all'||r.path==='/api/'+$('filter').value);
+  if($('follow').checked||!data.requests.some(r=>r.id===selected)){const next=filtered[0]?.id??null;if(next!==selected){selected=next;shownVersion=-1}}
+  renderList(data.requests);const summary=data.requests.find(r=>r.id===selected);
+  if(!summary){$('details').hidden=true;$('empty').hidden=false}else if(summary.version!==shownVersion){const response=await api('/v1/monitor/requests/'+selected);const record=await response.json();if(session!==current)return;renderDetail(record);shownVersion=record.version}
+ }catch(error){if(session===current&&error.name!=='AbortError')status(error.message,true)}
+ finally{busy=false;if(pending){pending=false;refresh()}}
+}
+async function stream(current){
+ const response=await api('/v1/monitor/events');const reader=response.body.getReader();const decoder=new TextDecoder();let buffer='';
+ try{while(session===current){const {value,done}=await reader.read();if(done)throw new Error('Canlı bağlantı kapandı. Tekrar bağlanın.');buffer+=decoder.decode(value,{stream:true});let boundary;while((boundary=buffer.indexOf('\n\n'))>=0){const event=buffer.slice(0,boundary);buffer=buffer.slice(boundary+2);if(event.startsWith('event: refresh'))refresh()}}}finally{reader.releaseLock()}
+}
+$('auth').onsubmit=async event=>{
+ event.preventDefault();if(session)session.controller.abort();reset();session={key:$('token').value.trim(),controller:new AbortController()};$('token').value='';const current=session;$('connect').disabled=true;$('disconnect').disabled=false;
+ try{await api('/v1/monitor/requests');if(session!==current)return;$('clear').disabled=false;status('Canlı bağlantı açık · Continue üzerinden istek gönderebilirsiniz.');await refresh();await stream(current)}catch(error){if(session===current&&error.name!=='AbortError'){current.controller.abort();session=null;$('connect').disabled=false;$('disconnect').disabled=true;$('clear').disabled=true;reset();status(error.message,true)}}
+};
+$('disconnect').onclick=disconnect;$('filter').onchange=()=>{selected=null;shownVersion=-1;refresh()};$('follow').onchange=()=>refresh();
+$('clear').onclick=async()=>{try{const data=await (await api('/v1/monitor/requests',{method:'DELETE'})).json();status(data.removed+' bitmiş kayıt temizlendi. Canlı bağlantı açık.');await refresh()}catch(error){status(error.message,true)}};
+window.addEventListener('pagehide',()=>{if(session)session.controller.abort()});
+</script>
+</html>

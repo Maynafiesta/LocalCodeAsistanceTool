@@ -1,0 +1,9 @@
+{
+  "telemetry.telemetryLevel": "off",
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  "update.mode": "none",
+  "editor.inlineSuggest.enabled": true,
+  "continue.enableTabAutocomplete": true,
+  "continue.telemetryEnabled": false
+}

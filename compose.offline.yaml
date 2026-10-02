@@ -1,0 +1,13 @@
+# Keep Ollama isolated while the gateway remains reachable through its published LAN port.
+# Docker 29 does not publish ports for containers attached only to internal networks.
+services:
+  ollama:
+    networks: !override
+      - inference
+  gateway:
+    networks: !override
+      - default
+      - inference
+networks:
+  inference:
+    internal: true

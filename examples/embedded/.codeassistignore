@@ -1,0 +1,3 @@
+# Match project-relative paths. No gitignore negation support.
+private/*
+docs/internal-credentials/*
